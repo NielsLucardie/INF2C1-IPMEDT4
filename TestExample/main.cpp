@@ -21,7 +21,7 @@ class MyMoblet : public WebAppMoblet
 public:
 	MyMoblet()
 	{
-		// Enable message sending from JavaScript to C++.
+		// Enable messacccge sending from JavaScript to C++.
 		enableWebViewMessages();
 
 		// Remove this line to enable the user to
