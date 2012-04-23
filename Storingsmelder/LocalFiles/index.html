@@ -1,0 +1,389 @@
+<!--
+Het html bestand maakt gebruik van de volgende includes:
+
+jquery mobile voor de layout (javascript en css)
+Google api voor de rss feed (javascript)
+zrssfeed Volledig aangepast voor de APP (lokaal javascript)
+Wormhole (javascript)
+
+De colde bestaat ui html/css en javascript. Kleine css aanpassingen zijn 
+binnen deze code gezet en niet apart verwerkt in een css file. Dit is gedaan 
+voor simpele test overwegingen (lokaal testen).
+
+-->
+
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>
+        </title>
+        <link rel="stylesheet" href="http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.css" />
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js">
+        </script>
+        <script src="http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.js">
+        </script>
+        
+        <!-- RSS RSS RSS RSS RSS -->
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+		<script src="js/jquery.zrssfeed.js" type="text/javascript"></script>
+		
+		<script type="text/javascript" charset="utf-8" src="js/wormhole.js"></script>
+        
+    </head>
+    <body>
+    
+        <script type="text/javascript">	
+		
+        var curScreen;
+        var refreshCount;
+        
+        //functie voor random getal (nodig voor google query)
+        function salt() {
+        	  var now = new Date();
+        	  var saltDate = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getHours(), now.getMinutes(), now.getSeconds());
+        	  return saltDate.getTime();
+        	}
+        
+        	//Providers en afhandeling van de RSS Feed op basis van keuzes of schermen
+			function goXS4ALL(){
+				$('#XS4ALL').rssfeed(null, 'provider', '1', 'http://niels.lucardie.nl/RSSTEST/results.rss?dummy=' + salt(), { });
+			}
+			function goNS(){
+				$('#NS').rssfeed(null, 'provider', '2', 'http://niels.lucardie.nl/RSSTEST/results.rss?dummy=' + salt(), { });
+			}
+			function goOVERIG(){
+				$('#OVERIG').rssfeed(null, 'provider', '8', 'http://niels.lucardie.nl/RSSTEST/results.rss?dummy=' + salt(), { });
+			}
+			function goALL(){
+				$('#STORINGEN').rssfeed(null, 'date', '', 'http://niels.lucardie.nl/RSSTEST/results.rss?dummy=' + salt(), { });
+			}
+			function goFAVOURITES(){
+				var tempArr = getFavourites();
+				$('#FAVORIETEN').rssfeed(tempArr, 'favourite', '', 'http://niels.lucardie.nl/RSSTEST/results.rss?dummy=' + salt(), { });
+			}
+			$(document).ready(function () {
+		    	goALL();
+		    	doTimer();
+			});
+		    
+			//Favorieten toegvoegen
+			function goFavourite(favourite){
+				var Favo = favourite;		
+		    	try {  
+		    		var value = window.localStorage.getItem(Favo);
+		    		if(value == null){
+		    			mosync.bridge.send(["Favouritepos", Favo]);
+		    			window.localStorage.setItem(Favo, Favo);
+		    		}else{
+		    			mosync.bridge.send(["Favouriteneg", Favo]);
+		    		}
+		    	} catch (error) {  
+		    	    //alert(error.message); 
+		    	}
+			}
+			
+			//Favorieten verwijderen
+			function noFavourite(favourite){
+				var Favo = favourite;		
+		    	try {
+		    		var value = window.localStorage.getItem(Favo);
+		    		if(value != null){
+		    			mosync.bridge.send(["Favouriteposrem", Favo]);
+		    			window.localStorage.removeItem(Favo);
+		    		}else{
+		    			mosync.bridge.send(["Favouritenegrem", Favo]);
+		    		}
+		    	} catch (error) {  
+		    	    //alert(error.message); 
+		    	}
+			}
+			
+			//favorieten ophalen naar array
+			function getFavourites(){
+				var favourites = new Array();
+				for (var i=0; i<window.localStorage.length; i++) {
+					favourites[i] = window.localStorage.key(i);
+				}
+				return favourites;
+			}
+			
+			//Alle favorieten verwijderen
+			function purgeFavourites(){
+				//var testfavvies = getFavourites();
+				window.localStorage.clear();
+			}
+			
+			//Uitvoeren op basis van timer event.
+			function doAll(){
+				//Refresh RSS Feed (stiekem in iframe kan door mosync niet anders!)
+				iframe = document.getElementById('theFrame');
+				iframe.src = 'http://niels.lucardie.nl/RSSTEST/';
+				
+				if(curScreen == "storingen"){
+					goALL();
+				}else if(curScreen == "favorieten"){
+					goFAVOURITES();
+				}else if(curScreen == "providers"){
+					//Niks doen (events lopen op dropboxen!)
+				}else if(curScreen == "overig"){
+					//Niks doen (overig zit geen feed in!)	
+				}
+				
+				//Check favorieten voor veranderingen
+				checkFavourites();			
+				doTimer();
+			}
+			
+			//timer event
+			function doTimer(){
+				var t=setTimeout("doAll()",60000);
+			}
+			
+			//huidige scherm bijhouden
+			function trackScreens(theScreen){
+				curScreen = theScreen;
+			}
+			
+			//favorieten controleren
+			function checkFavourites(){
+				var tempArr = getFavourites();
+				var curFavo = checkFavo(tempArr);
+				
+				if(curFavo > 0){
+					//do remove
+					window.localStorage.removeItem(curFavo);
+					//do message
+					mosync.bridge.send(["FavouriteSolved", curFavo]);
+					//go to fav screen and update
+					doAll();
+				}
+			}
+		</script>
+    
+        <div data-role="page" data-theme="b" id="page1">
+        
+            <div data-theme="" data-role="header" data-position="fixed">
+            <h1>Storingen</h1>
+                  <div data-role="navbar" data-theme="a" data-iconpos="bottom" style="width:100%;">
+                    <ul>
+                        <li>
+                            <a href="#page1" data-theme="" data-icon="home" style="padding-bottom:5px;" onclick="goALL(); trackScreens('storingen')" data-transition="none">
+                                Storingen
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#page7" data-theme="" data-icon="star" style="padding-bottom:5px;" onclick="goFAVOURITES(); trackScreens('favorieten')" data-transition="none">
+                                Favorieten
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#page8" data-theme="" data-icon="grid" style="padding-bottom:5px;" data-transition="none" onclick="trackScreens('providers')">
+                                Providers
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#page10" data-theme="" data-icon="info" style="padding-bottom:5px;" data-transition="none" onclick="trackScreens('overig')">
+                                Overig
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div data-role="content">
+
+			<!-- Content voor de eerste pagina (Storingen chronologisch) -->
+			<p style="font-weight:bold; font-size:16px;">Storingen:</p>
+			<div>
+					<div id="STORINGEN"></div>                       
+            </div>
+
+            </div>
+            
+            <div data-theme="a" data-role="footer" data-position="fixed" >
+            </div>
+            <div data-theme="a" data-role="footer" data-position="fixed" >
+                <h1 style="font-size:10px;">
+                    Storingsmelder by Appvance©
+                </h1>
+            </div>
+        </div>
+        
+        <div data-role="page" data-theme="b" id="page7">
+            
+            <div data-theme="" data-role="header" data-position="fixed">
+            <h1>Storingen</h1>
+                  <div data-role="navbar" data-theme="a" data-iconpos="bottom" style="width:100%;">
+                    <ul>
+                        <li>
+                            <a href="#page1" data-theme="" data-icon="home" style="padding-bottom:5px;" onclick="goALL(); trackScreens('storingen')" data-transition="none">
+                                Storingen
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#page7" data-theme="" data-icon="star" style="padding-bottom:5px;" onclick="goFAVOURITES(); trackScreens('favorieten')" data-transition="none">
+                                Favorieten
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#page8" data-theme="" data-icon="grid" style="padding-bottom:5px;" data-transition="none" onclick="trackScreens('providers')">
+                                Providers
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#page10" data-theme="" data-icon="info" style="padding-bottom:5px;" data-transition="none" onclick="trackScreens('overig')">
+                                Overig
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div data-role="content">
+            
+            <!-- Content voor de tweede pagina (Storingen favorieten) -->
+            <p style="font-weight:bold; font-size:16px;">Favorieten:</p>
+            
+            <div id="FAVORIETEN"></div> 
+                 
+            </div>
+            <a data-theme="none" type="image" onclick="purgeFavourites(); goFAVOURITES();"><img src="images/cross.png" ALIGN="middle" style="width:25px; height:25px;"><p>Alles verwijderen</p></a>
+            
+            <div data-theme="a" data-role="footer" data-position="fixed">
+            </div>
+            <div data-theme="a" data-role="footer" data-position="fixed">
+                <h1 style="font-size:10px;">
+                    Storingsmelder by Appvance©
+                </h1>
+            </div>
+            </div>
+        
+        <div data-role="page" data-theme="b" id="page8">
+           <div data-theme="" data-role="header" data-position="fixed">
+            <h1>Storingen</h1>
+                  <div data-role="navbar" data-theme="a" data-iconpos="bottom" style="width:100%;">
+                    <ul>
+                        <li>
+                            <a href="#page1" data-theme="" data-icon="home" style="padding-bottom:5px;" onclick="goALL(); trackScreens('storingen')" data-transition="none">
+                                Storingen
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#page7" data-theme="" data-icon="star" style="padding-bottom:5px;" onclick="goFAVOURITES();  trackScreens('favorieten')" data-transition="none">
+                                Favorieten
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#page8" data-theme="" data-icon="grid" style="padding-bottom:5px;" data-transition="none" onclick="trackScreens('providers')">
+                                Providers
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#page10" data-theme="" data-icon="info" style="padding-bottom:5px;" data-transition="none" onclick="trackScreens('overig')">
+                                Overig
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div data-role="content">
+            
+            <!-- Content voor de derde pagina (providers) -->
+            
+            <p style="font-weight:bold; font-size:16px;">Kies een provider:</p>
+            
+            <div data-role="collapsible-set" data-theme="" data-content-theme="">
+                    <div data-role="collapsible" data-collapsed="true" onClick="goXS4ALL()">
+                        <h3>
+                            XS4ALL Storingen
+                        </h3>
+						<div id="XS4ALL"></div> 
+                    </div>
+                </div>
+                <div data-role="collapsible-set" data-theme="" data-content-theme="">
+                    <div data-role="collapsible" data-collapsed="true" onClick="goNS()"> 
+                        <h3>
+                            NS Storingen
+                        </h3>
+						<div id="NS"></div>                       
+                    </div>
+                </div>
+                <div data-role="collapsible-set" data-theme="" data-content-theme="">
+                    <div data-role="collapsible" data-collapsed="true" onClick="goOVERIG()">
+                        <h3>
+                            Overige Storingen
+                        </h3>
+						<div id="OVERIG"></div>                       
+                    </div>
+             </div>
+            
+            </div>
+            <div data-theme="a" data-role="footer" data-position="fixed">
+            </div>
+            <div data-theme="a" data-role="footer" data-position="fixed">
+                <h1 style="font-size:10px;">
+                    Storingsmelder by Appvance©
+                </h1>
+            </div>
+        </div>
+        <div data-role="page" data-theme="b" id="page10">
+            
+           <div data-theme="" data-role="header" data-position="fixed">
+            <h1>Storingen</h1>
+                  <div data-role="navbar" data-theme="a" data-iconpos="bottom" style="width:100%;">
+                    <ul>
+                        <li>
+                            <a href="#page1" data-theme="" data-icon="home" style="padding-bottom:5px;" onclick="goALL(); trackScreens('storingen')" data-transition="none">
+                                Storingen
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#page7" data-theme="" data-icon="star" style="padding-bottom:5px;" onclick="goFAVOURITES();  trackScreens('favorieten')" data-transition="none">
+                                Favorieten
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#page8" data-theme="" data-icon="grid" style="padding-bottom:5px;" data-transition="none" onclick="trackScreens('providers')">
+                                Providers
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#page10" data-theme="" data-icon="info" style="padding-bottom:5px;" data-transition="none" onclick="trackScreens('overig')">
+                                Overig
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div data-role="content">
+            
+            <!-- Content voor de vierde pagina (Storingen chronologisch) -->
+            <p style="font-weight:bold; font-size:16px;">Informatie:</p>
+            
+            <div style="font-size:9px">
+            
+            <p>De Storingsmelder is gemaakt door Appvance in opdracht van de Hogeschool Leiden. Aan deze applicatie kunnen rechten worden ontleend.</p>
+            <p style="font-weight:bold; font-size:16px;">Instructies:</p>
+            <p>Storingen:<br>Gebruik het storingen overzicht om de huidige storingen op chronologische volgorde te bekijken. Er kunnen storingen bij de favorieten worden toegevoegd.</p>
+            <p>Favorieten:<br>Gebruik het favorieten overzicht om de als favoriet gekozen berichten te zien. Als favorieten storingen opgelost zijn worden deze verwijderd uit de lijst en wordt er een notificatie gegeven.</p>
+            <p>Providers:<br>Gebruik het providers overzicht om de storingen op volgorde van provider te bekijken. Er kunnen storingen bij de favorieten worden toegevoegd.</p>
+            <img src="images/testlogo.png" style="width:35%; margin-left:150px;" />
+            </div>
+
+<iframe style="width:0px; height:0px;" src="" id="theFrame"></iframe> 
+
+            </div>
+            <div data-theme="a" data-role="footer" data-position="fixed">
+            </div>
+            <div data-theme="a" data-role="footer" data-position="fixed">
+                <h1 style="font-size:10px;">
+                    Storingsmelder by Appvance©
+                </h1>
+            </div>
+        </div>    
+    </body>
+</html>

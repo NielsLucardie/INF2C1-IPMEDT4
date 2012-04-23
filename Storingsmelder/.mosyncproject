@@ -3,9 +3,8 @@
 <build.cfg id="Debug" types="Debug"/>
 <build.cfg id="Release" types="Release"/>
 <properties>
-<property key="build.prefs:additional.libraries" value="MAUtil.lib, NativeUI.lib, MAFS.lib, Wormhole.lib"/>
-<property key="build.prefs:additional.libraries/Debug" value="MAUtilD.lib, NativeUID.lib, MAFSD.lib, WormholeD.lib"/>
-<property key="build.prefs:app.permissions" value="File\ Storage Internet\ Access Vibration"/>
+<property key="build.prefs:additional.libraries" value="MAUtil.lib, NativeUI.lib, MAFS.lib, Wormhole.lib, yajl.lib, Notification.lib"/>
+<property key="build.prefs:additional.libraries/Debug" value="MAUtilD.lib, NativeUID.lib, MAFSD.lib, WormholeD.lib, yajlD.lib, NotificationD.lib"/>
 <property key="build.prefs:memory.data/Debug" value="4096"/>
 <property key="build.prefs:memory.data/Release" value="4096"/>
 <property key="build.prefs:memory.heap/Debug" value="3072"/>
@@ -13,6 +12,8 @@
 <property key="build.prefs:memory.stack/Debug" value="512"/>
 <property key="build.prefs:memory.stack/Release" value="512"/>
 <property key="com.mobilesorcery.sdk.html5.support" value="true"/>
+<property key="profile.mgr.type" value="0"/>
 <property key="template.id" value="project.html5.hybrid"/>
+<property key="winmobilecs:guid" value="dd828a80-6e0d-102f-80ec-638449ef9504"/>
 </properties>
 </project>
