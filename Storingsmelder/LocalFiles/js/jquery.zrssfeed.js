@@ -1,12 +1,32 @@
 /**
- * Deze hele klasse is van de volgende bron overgenomen:
- * 
- * http://www.zazar.net/developers/jquery/zrssfeed/
- * 
- * Deze klasse is bijna volledig aangepast om het gewenste resultaat te geven.
- * Ophalen van de feed en in html vorm terug geven aan javascript/html. Deze
- * gegevens worden in de juiste Div geplaatst.
- **/
+* Geschreven door G.N.T. Lucardie.
+* 
+* De klasse gaat uit van de backend RSS feed zoals aangeboden op:
+* 
+* http://niels.lucardie.nl/RSSTEST/results.rss
+* 
+* Deze hele klasse is van de volgende bron overgenomen (open source, no limitations):
+* 
+* http://www.zazar.net/developers/jquery/zrssfeed/
+* 
+* Deze klasse is bijna volledig aangepast om het gewenste resultaat te geven.
+* Ophalen van de feed en in html vorm terug geven aan javascript/html. Deze
+* gegevens worden in de juiste Div geplaatst. Deze klasse is dus niet simpelweg
+* gebruikt en direct ingezet. Er is veel werk verricht om de klasse aan te passen
+* De werkelijke klasse is bijna volledig aangepast.
+* 
+* De gebruikte klasse is afkomstig van de bovenstaande website en mag gebruikt en 
+* aangepast worden zonder nodige licenties.
+* 
+*/
+
+
+
+/**
+* Geschreven door G.N.T. Lucardie.
+* 
+* Nodige variabelen, oa. om op te slaan en een aantal constanten om te bepalen om welke provider het gaat.
+*/
 var theProvider;
 var typeFilter;
 var favArray;
@@ -16,8 +36,11 @@ var idOVERIG = 8;
 var StoringArray = new Array();
 
 /**
- * Controleren van favorieten tegenover de feeds (opgebouwde array).
- **/
+* Geschreven door G.N.T. Lucardie.
+* 
+* Deze functie controleert of er favorieten zijn en geeft deze terug aan de frontend. 
+* De functie wordt gebruikt om te kijken of een favoriet gebruikt moet worden om een alarm aan te roepen.
+*/
 function checkFavo(favoArr){
 	for (var j=0; j<favoArr.length; j++) {
 		var retFav = favoArr[j];
@@ -36,8 +59,14 @@ function checkFavo(favoArr){
 }
 
 /**
- * Feed verwerken
- **/
+* Geschreven door G.N.T. Lucardie.
+* 
+* Deze functie is de meest gebruikte functie binnen de applicatie. De functie haalt RSS feed op en doet dit op 
+* basis van een aantal gegeven variabelen zoals; provider, type. Aan deze functie wordt een html div mee gegeven
+* deze div wordt gevuld met gegeven (in opmaak) op basis van de gegeven variabelen. Deze functie maakt als het ware
+* de hele applicatie aangezien het de RSS ophaalt uit de backend en en luistert naar de frontend. Binnen de functie
+* is er van commentaar voorzien waar nodig.
+*/
 (function($){
 
 	$.fn.rssfeed = function(favoArr, type, provider, url, options, fn) {	
@@ -46,7 +75,12 @@ function checkFavo(favoArr){
 		typeFilter = type;
 		favArray = favoArr;
 
-		// Set pluign defaults
+		/**
+		* Geschreven door G.N.T. Lucardie.
+		* 
+		* Hier stellen we default waarden in voor de functie. Deze mogen voor deze APP niet aangepast worden, 
+		* dit heeft namelijk invloed op de output van de functie en dus de RSS feed.
+		*/
 		var defaults = {
 				limit: 100,
 				header: false,
@@ -63,42 +97,47 @@ function checkFavo(favoArr){
 		};  
 		var options = $.extend(defaults, options); 
 
-		// Functions
 		return this.each(function(i, e) {
 
 			var $e = $(e);
 			var s = '';
 
-			// Check for SSL protocol
 			if (options.ssl) s = 's';
 
-			// Add feed class to user div
 			if (!$e.hasClass('rssFeed')) $e.addClass('rssFeed');
 
-			// Check for valid url
 			if(url == null) return false;
 
-			// Create Google Feed API address
+			/**
+			* Geschreven door G.N.T. Lucardie.
+			* 
+			* Hier wordt het adres van de Google API Feed samengesteld.
+			*/
 			var api = "http"+ s +"://ajax.googleapis.com/ajax/services/feed/load?v=1.0&callback=?&q=" + encodeURIComponent(url);
 			if (options.limit != null) api += "&num=" + options.limit;
 			if (options.key != null) api += "&key=" + options.key;
 			api += "&output=json_xml"
 
-				// Send request
 				$.getJSON(api, function(data){
 
-					// Check for error
 					if (data.responseStatus == 200) {
 
-						// Process the feeds
 						_process(e, data.responseData, options);
 
-						// Optional user callback function
+						/**
+						* Geschreven door G.N.T. Lucardie.
+						* 
+						* Wij gebruiken geen callback functie.
+						*/
 						if ($.isFunction(fn)) fn.call(this,$e);
 
 					} else {
-
-						// Handle error if required
+						
+						/**
+						* Geschreven door G.N.T. Lucardie.
+						* 
+						* Error div, als het goed is wordt deze nooit aangeroepen.
+						*/
 						if (options.showerror)
 							if (options.errormsg != '') {
 								var msg = options.errormsg;
@@ -111,10 +150,13 @@ function checkFavo(favoArr){
 		});
 	};
 
-	// Function to create HTML result
+	/**
+	* Geschreven door G.N.T. Lucardie.
+	* 
+	* Het opbouwen van de opgehaalde feed (resultaten) in HTML opbouw.
+	*/
 	var _process = function(e, data, options) {
 
-		// Get JSON feed data
 		var feeds = data.feed;
 		if (!feeds) {
 			return false;
@@ -122,70 +164,67 @@ function checkFavo(favoArr){
 		var html = '';	
 		var row = 'odd';
 
-		// Get XML data for media (parseXML not used as requires 1.5+)
 		if (options.media) {
 			var xml = getXMLDocument(data.xmlString);
 			var xmlEntries = xml.getElementsByTagName('item');
 		}
 
-		// Add header if required
 		if (options.header)
 			html +=	'<div class="rssHeader">' +
 			'<a href="'+feeds.link+'" title="'+ feeds.description +'">'+ feeds.title +'</a>' +
 			'</div>';
 
-		//Add body
 		html += '<div class="rssBody">';
-		//'<ul>';
 
 		/**
-		 * Feed verwerken naar html op basis van provider (scherm)
+		 * Geschreven door G.N.T. Lucardie.
+		 * 
+		 * Hier wordt de feed verwerkt naar html op basis van provider. 
+		 * Dus als het type 'provider' wordt meegegeven als variabelen dan komen we in deze code.
+		 * 
+		 * Deze code doet het volgende:
+		 * 
+		 * Zet de storing op basis van een filter (provider en provider ID) in een html opbouw 
+		 * van deze storingen. Deze storingen bevatten dus al de opbouw die en de links die nodig zijn 
+		 * in de frontend. In een later stadium is het nodig om deze in een CSS stylesheet te zetten zodat
+		 * er met verschillende thema's gewerkt kan worden, dat is nu niet nodig.
+		 * 
+		 * De titel van de feed bestaat uit een lange string met gegevens die te onderscheiden zijn met [haakjes].
+		 * Deze string wordt uit elkaar gehaald zodat het duidelijk is om wat voor storing het gaat. Op basis van 
+		 * deze gegevens kan de storing gefilterd worden en kunnen indien nodig de gegevens hiervan (zoals naam)
+		 * gebruikt worden.
 		 **/
 		if(typeFilter == 'provider'){
 
 			StoringArray = new Array();
-			// Add feeds
+			
 			for (var i=0; i<feeds.entries.length; i++) {
 
-				// Get individual feed
 				var entry = feeds.entries[i];
 				var pubDate;
 
-				// Format published date
 				if (entry.publishedDate) {
 					var entryDate = new Date(entry.publishedDate);
 					var pubDate = entryDate.toLocaleDateString() + ' ' + entryDate.toLocaleTimeString();
 				}
-
-				// Add feed row
-				//html += '<li class="rssRow '+row+'">'; 
-
-				//Hier even de titel uit elkaar halen (client, publicatie, solved, naam)		
+		
 				var destructionString = entry.title;
 
-				//min clientID
 				var clientId = destructionString.substring(destructionString.indexOf("[") +1, destructionString.indexOf("]"));
 				destructionString = destructionString.substring(destructionString.indexOf("]") + 1, destructionString.length);
 
-				//Filter Storingen
-				if(clientId == theProvider){ //All = (true) Filter = (clientId == ?)
+				if(clientId == theProvider){
 
 					html += '<div style="background-color:#99CCFF; border-radius: 15px; padding:5px; font-size:9px; margin-bottom:5px;">';
 
-					//html += '<p>Client ID: ' + clientId + '</p>';
-
-					//min pubID
 					var pubId = destructionString.substring(destructionString.indexOf("[") +1, destructionString.indexOf("]"));
 					destructionString = destructionString.substring(destructionString.indexOf("]") + 1, destructionString.length);
-					//html += '<p>Publicatie ID: ' + pubId + '</p>';
 
-					//Array vullen voor de favo check
 					StoringArray[i] = pubId;
 
 					html += '<input type="image" src="images/star.png" name="image" value=' + pubId + ' style="margin-right:5px; float:right; width:25px; height:25px;" onclick="goFavourite(' + pubId + ')">';
 					html += '<br>';
 
-					//min Solved
 					var solved = destructionString.substring(destructionString.indexOf("[") +1, destructionString.indexOf("]"));
 					destructionString = destructionString.substring(destructionString.indexOf("]") + 1, destructionString.length);
 					if(solved == 'false'){
@@ -194,12 +233,10 @@ function checkFavo(favoArr){
 						html += '<p style="color:#008000;">Opgelost</p>';
 					}
 
-					//Add Titel
 					html += '<p>' + destructionString +'</p>'
 					if (options.date && pubDate) html += '<p>'+ pubDate +'</p>'
 					if (options.content) {
 
-						// Use feed snippet if available and optioned
 						if (options.snippet && entry.contentSnippet != '') {
 							var content = entry.contentSnippet;
 						} else {
@@ -209,7 +246,6 @@ function checkFavo(favoArr){
 						html += '<p>'+ content +'</p>'
 					}	
 
-					//hyperlink
 					html += '<p><a href="'+ entry.link +'" title="View this feed at '+ feeds.title +'">'+ 'Ga naar de website.' +'</a></p>';
 
 					html += '</div>';
@@ -218,25 +254,36 @@ function checkFavo(favoArr){
 		}
 
 		/**
-		 * Feed verwerken naar html op basis van datum (scherm/chronologisch)
+		 * Geschreven door G.N.T. Lucardie.
+		 * 
+		 * Hier wordt de feed verwerkt naar html op basis van datum. 
+		 * Dus als het type 'date' wordt meegegeven als variabelen dan komen we in deze code.
+		 * 
+		 * Deze code doet het volgende:
+		 * 
+		 * Zet de storing op basis van geen filter (alle meldingen op chronologische volgorde)
+		 * in een html opbouw. Deze storingen bevatten dus al de opbouw die en de links die nodig zijn 
+		 * in de frontend. In een later stadium is het nodig om deze in een CSS stylesheet te zetten zodat
+		 * er met verschillende thema's gewerkt kan worden, dat is nu niet nodig.
+		 * 
+		 * De titel van de feed bestaat uit een lange string met gegevens die te onderscheiden zijn met [haakjes].
+		 * Deze string wordt uit elkaar gehaald zodat het duidelijk is om wat voor storing het gaat. Op basis van 
+		 * deze gegevens kan de storing gefilterd worden en kunnen indien nodig de gegevens hiervan (zoals naam)
+		 * gebruikt worden.
 		 **/
 		if(typeFilter == 'date'){
 
-			//Variabelen
 			var DateSelection = new Array();
 
 			StoringArray = new Array();
 
-			//Array opbouwen voor datum selectie
 			for (var i=0; i<feeds.entries.length; i++) {
 				var post = new Array();
 
 				var entry = feeds.entries[i];
 
-				// Format published date
 				var entryDate = new Date(entry.publishedDate);
 
-				//min clientID
 				var destructionString = entry.title;
 				var clientId = destructionString.substring(destructionString.indexOf("[") +1, destructionString.indexOf("]"));
 				destructionString = destructionString.substring(destructionString.indexOf("]") + 1, destructionString.length);
@@ -250,7 +297,7 @@ function checkFavo(favoArr){
 
 			DateSelection.sort(function(a, b) {
 				var valueA, valueB;
-				valueA = a[1]; // Where 1 is your index, from your example
+				valueA = a[1];
 				valueB = b[1];
 				if (valueA < valueB) {
 					return -1;
@@ -265,53 +312,35 @@ function checkFavo(favoArr){
 				var tempArray = DateSelection[j];
 				var tempPub = tempArray[0];
 
-				// Add feeds
 				for (var i=0; i<feeds.entries.length; i++) {
 
-					// Get individual feed
 					var entry = feeds.entries[i];
 					var pubDate;
 
-					// Format published date
 					if (entry.publishedDate) {
 						var entryDate = new Date(entry.publishedDate);
 						var pubDate = entryDate.toLocaleDateString() + ' ' + entryDate.toLocaleTimeString();
 					}
-
-					// Add feed row
-					//html += '<li class="rssRow '+row+'">'; 
-
-					//Hier even de titel uit elkaar halen (client, publicatie, solved, naam)		
+	
 					var destructionString = entry.title;
 
-					//min clientID
 					var clientId = destructionString.substring(destructionString.indexOf("[") +1, destructionString.indexOf("]"));
 					destructionString = destructionString.substring(destructionString.indexOf("]") + 1, destructionString.length);
 
-					//min pubID
 					var pubId = destructionString.substring(destructionString.indexOf("[") +1, destructionString.indexOf("]"));
 					destructionString = destructionString.substring(destructionString.indexOf("]") + 1, destructionString.length);
 
-					//Array vullen voor de favo check
 					StoringArray[i] = pubId;
-
-					//alert(tempArray[1] + ' en ' + pubId);
 
 					if(tempPub == pubId){
 
-						//Filter Storingen
-						if(true){ //All = (true) Filter = (clientId == ?)
+						if(true){ 
 
 							html += '<div style="background-color:#99CCFF; border-radius: 15px; padding:5px; font-size:9px; margin-bottom:5px;">';
-
-							//html += '<p>Client ID: ' + clientId + '</p>';
-
-							//html += '<p>Publicatie ID: ' + pubId + '</p>';
 
 							html += '<input type="image" src="images/star.png" name="image" value=' + pubId + ' style="margin-right:5px; float:right; width:25px; height:25px;" onclick="goFavourite(' + pubId + ')">';
 							html += '<br>';
 
-							//Provider naam kiezen
 							if(clientId == idXS4ALL){
 								html += '<p>XS4ALL</p>';
 							}else if(clientId == idNS){
@@ -320,7 +349,6 @@ function checkFavo(favoArr){
 								html += '<p>Overige Storingen</p>';
 							}
 
-							//min Solved
 							var solved = destructionString.substring(destructionString.indexOf("[") +1, destructionString.indexOf("]"));
 							destructionString = destructionString.substring(destructionString.indexOf("]") + 1, destructionString.length);
 							if(solved == 'false'){
@@ -328,13 +356,11 @@ function checkFavo(favoArr){
 							}else{
 								html += '<p style="color:#008000;">Opgelost</p>';
 							}
-
-							//Add Titel				
+			
 							html += '<p>' + destructionString +'</p>';
 							if (options.date && pubDate) html += '<p>'+ pubDate +'</p>';
 							if (options.content) {
 
-								// Use feed snippet if available and optioned
 								if (options.snippet && entry.contentSnippet != '') {
 									var content = entry.contentSnippet;
 								} else {
@@ -344,7 +370,6 @@ function checkFavo(favoArr){
 								html += '<p>'+ content +'</p>';
 							}	
 
-							//hyperlink
 							html += '<p><a href="'+ entry.link +'" title="View this feed at '+ feeds.title +'">'+ 'Ga naar de website.' +'</a></p>';
 
 							html += '</div>';
@@ -355,60 +380,57 @@ function checkFavo(favoArr){
 		}
 
 		/**
-		 * Feed verwerken naar html op basis van favorieten (scherm)
+		 * Geschreven door G.N.T. Lucardie.
+		 * 
+		 * Hier wordt de feed verwerkt naar html op basis van een favoriet. 
+		 * Dus als het type 'favo' wordt meegegeven als variabelen dan komen we in deze code.
+		 * 
+		 * Deze code doet het volgende:
+		 * 
+		 * Zet de storing op basis van een filter (favorieten uit de local storage van de telefoon) 
+		 * in een html opbouw van deze storingen. Deze storingen bevatten dus al de opbouw die en de 
+		 * links die nodig zijn in de frontend. In een later stadium is het nodig om deze in een CSS 
+		 * stylesheet te zetten zodat er met verschillende thema's gewerkt kan worden, dat is nu niet nodig.
+		 * 
+		 * De titel van de feed bestaat uit een lange string met gegevens die te onderscheiden zijn met [haakjes].
+		 * Deze string wordt uit elkaar gehaald zodat het duidelijk is om wat voor storing het gaat. Op basis van 
+		 * deze gegevens kan de storing gefilterd worden en kunnen indien nodig de gegevens hiervan (zoals naam)
+		 * gebruikt worden.
 		 **/
 		if(typeFilter == 'favourite'){
 
 			StoringArray = new Array()
 
-			// Add feeds
 			for (var i=0; i<feeds.entries.length; i++) {
 
-				// Get individual feed
 				var entry = feeds.entries[i];
 				var pubDate;
 
-				// Format published date
 				if (entry.publishedDate) {
 					var entryDate = new Date(entry.publishedDate);
 					var pubDate = entryDate.toLocaleDateString() + ' ' + entryDate.toLocaleTimeString();
 				}
-
-				// Add feed row
-				//html += '<li class="rssRow '+row+'">'; 
-
-				//Hier even de titel uit elkaar halen (client, publicatie, solved, naam)		
+		
 				var destructionString = entry.title;
 
-				//min clientID
 				var clientId = destructionString.substring(destructionString.indexOf("[") +1, destructionString.indexOf("]"));
 				destructionString = destructionString.substring(destructionString.indexOf("]") + 1, destructionString.length);
 
-				//min pubID
 				var pubId = destructionString.substring(destructionString.indexOf("[") +1, destructionString.indexOf("]"));
 				destructionString = destructionString.substring(destructionString.indexOf("]") + 1, destructionString.length);
 
-				//Array vullen voor de favo check
 				StoringArray[i] = pubId;
-
-				//alert(tempArray[1] + ' en ' + pubId);
 
 				for(var j=0; j<favArray.length; j++) {
 					if(favArray[j] == pubId){
 
-						//Filter Storingen
-						if(true){ //All = (true) Filter = (clientId == ?)
+						if(true){ 
 
 							html += '<div style="background-color:#99CCFF; border-radius: 15px; padding:5px; font-size:9px; margin-bottom:5px;">';
-
-							//html += '<p>Client ID: ' + clientId + '</p>';
-
-							//html += '<p>Publicatie ID: ' + pubId + '</p>';
 
 							html += '<input type="image" src="images/cross.png" name="image" value=' + pubId + ' style="margin-right:5px; float:right; width:25px; height:25px;" onclick="noFavourite(' + pubId + '); goFAVOURITES();">';
 							html += '<br>';
 
-							//Provider naam kiezen
 							if(clientId == idXS4ALL){
 								html += '<p>XS4ALL</p>';
 							}else if(clientId == idNS){
@@ -417,7 +439,6 @@ function checkFavo(favoArr){
 								html += '<p>Overige Storingen</p>';
 							}
 
-							//min Solved
 							var solved = destructionString.substring(destructionString.indexOf("[") +1, destructionString.indexOf("]"));
 							destructionString = destructionString.substring(destructionString.indexOf("]") + 1, destructionString.length);
 							if(solved == 'false'){
@@ -425,13 +446,11 @@ function checkFavo(favoArr){
 							}else{
 								html += '<p style="color:#008000;">Opgelost</p>';
 							}
-
-							//Add Titel				
+			
 							html += '<p>' + destructionString +'</p>';
 							if (options.date && pubDate) html += '<p>'+ pubDate +'</p>';
 							if (options.content) {
 
-								// Use feed snippet if available and optioned
 								if (options.snippet && entry.contentSnippet != '') {
 									var content = entry.contentSnippet;
 								} else {
@@ -441,7 +460,6 @@ function checkFavo(favoArr){
 								html += '<p>'+ content +'</p>';
 							}	
 
-							//hyperlink
 							html += '<p><a href="'+ entry.link +'" title="View this feed at '+ feeds.title +'">'+ 'Ga naar de website.' +'</a></p>';
 
 							html += '</div>';
@@ -451,12 +469,15 @@ function checkFavo(favoArr){
 			}
 		}
 
-		//html += '</ul>' +
+		
+		/**
+		 * Geschreven door G.N.T. Lucardie.
+		 * 
+		 * Na het opbowen van de nodige html is geven we deze terug aan de frontend zodat deze geplaatst kan 
+		 * worden in de juiste html Div.
+		 **/
 		html += '</div>';
-
 		$(e).html(html);
-
-		// Apply target to links
 		$('a',e).attr('target',options.linktarget);
 	};
 

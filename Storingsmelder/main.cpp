@@ -1,4 +1,11 @@
 /**
+ * Geschreven door G.N.T. Lucardie.
+ *
+ *
+ *
+ */
+
+/**
  * @file main.cpp
  *
  * This template application shows how to extend the functionality
